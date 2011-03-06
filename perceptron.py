@@ -1,5 +1,15 @@
 #!/usr/bin/python2
-# coding=utf-8
+# -*- coding: utf-8 -*-
+
+# Simulace perceptronu neuronové sítě
+# Autor: Ondřej Garncarz, 2011
+# Program je napsán v jazyce Python, využívá prostředí GTK a grafického nástroje
+# Cairo.
+# Spouští se následovně:
+# python perceptron.py <vstup> - poté spustí interaktivní GUI pro daný vstupní
+#   soubor s možností se učit a testovat
+# python perceptron.py <vstup> <výstup> - poté se automaticky naučí ze vstupního
+#   souboru a výsledky testování bodů vypíše do výstupního souboru
 
 import gtk, cairo
 import sys
@@ -7,18 +17,26 @@ import sys
 from math import ceil, pi
 import random
 
+
+# třída neuronové sítě o jednom perceptronu
 class Net:
 
+	# třída vstupu perceptronu
 	class Input:
+	
+		# konstruktor, přiřadí vlastnostem vstupu přijaté hodnoty
 		def __init__(self, **kwargs):
 			for key, value in kwargs.items():
 				setattr(self, key, value)
 		
+		# vrátí rozsah hodnot daného vstupu
 		def rangeVal(self):
 			return self.maxVal - self.minVal
 	
+	# načte informace popisující a testující perceptron z daného souboru
 	def readInputFile(self, inputFilename):
 	 
+	 	# vrátí následující informativní řádku souboru
 		def readLine():
 			line = ""
 			while line == "" or line.startswith('#'):
@@ -27,29 +45,33 @@ class Net:
 		
 		inputFile = open(inputFilename, "r")
 
-		self.inputsLen = int(readLine())
-		self.inputs = list()
-		self.inputs.append(self.Input(name = "nulák",
-			minVal = 0.0, maxVal = 1.0))
-		for i in range(self.inputsLen):
+		self.inputsLen = int(readLine())  # počet vstupů perceptronu
+		self.inputs = list()  # vstupy perceptronu
+		self.inputs.append(self.Input(name = "nulák",  # první je fixní
+			minVal = 0.0, maxVal = 1.0))  # s nasyceným příjmem
+		for i in range(self.inputsLen):  # ostatní vstupy
 			name, minVal, maxVal = readLine().split()
 			self.inputs.append(self.Input(name = name,
 				minVal = float(minVal), maxVal = float(maxVal)))
 
-		self.coeff = float(readLine())
+		self.coeff = float(readLine())  # koeficient učení
 
-		self.learningLen = int(readLine())
-		self.learning = list()
+		self.learningLen = int(readLine())  # počet učících bodů
+		self.learning = list()  # učící body
 		for i in range(self.learningLen):
 			self.learning.append(self.normalizeValues(readLine().split()))
 
-		self.testingLen = int(readLine())
-		self.testing = list()
+		self.testingLen = int(readLine())  # počet testovaných bodů
+		self.testingOrig = list()  # originální zadání testovaných bodů
+		self.testing = list()  # testované body s normalizovanými hodnotami
 		for i in range(self.testingLen):
-			self.testing.append(self.normalizeValues(readLine().split()))
+			line = readLine().split()
+			self.testingOrig.append(line)
+			self.testing.append(self.normalizeValues(line))
 
 		inputFile.close()
 	
+	# vrátí normalizované hodnoty bodu pro rozsah <0, 1>
 	def normalizeValues(self, values):
 		newValues = list()
 		for i in range(self.inputsLen):
@@ -59,61 +81,88 @@ class Net:
 			newValues.append(float(values[self.inputsLen]))
 		return newValues
 	
+	# vynuluje učení perceptronu, nastaví váhy vstupů na náhodné hodnoty
 	def reset(self):
 		for inp in self.inputs:
 			inp.weight = random.random()
 		self.toLearn = 0
 		self.lastAdapt = 0
 	
+	# vyhodnotí daný bod podle toho, co se zatím naučil
 	def evaluate(self, point):
 		y = self.inputs[0].weight
 		for i in range(1, self.inputsLen + 1):
 			y += self.inputs[i].weight * point[i - 1]
 		return 1 if y > 0 else 0
 	
-	def adapt(self, point, sign):
-		self.inputs[0].weight += sign * 1
-		for i in range(1, self.inputsLen + 1):
-			self.inputs[i].weight += sign * point[i - 1]
-		self.lastAdapt = 0
-	
+	# postoupí ve fázi učení
 	def learnMore(self):
-		if self.evaluate(self.learning[self.toLearn]) != \
-			self.learning[self.toLearn][self.inputsLen]:
-			self.adapt(self.learning[self.toLearn], \
-				1 if self.learning[self.toLearn][self.inputsLen] == 1 else -1)
+		delta = self.learning[self.toLearn][self.inputsLen] - \
+			self.evaluate(self.learning[self.toLearn])
+		if delta != 0:
+			# adaptace
+			self.inputs[0].weight += delta * self.coeff * 1
+			for i in range(1, self.inputsLen + 1):
+				self.inputs[i].weight += delta * self.coeff * \
+					self.learning[self.toLearn][i - 1]
+			self.lastAdapt = 0  # kroků od poslední adaptace
 		else:
 			self.lastAdapt += 1
-		self.toLearn += 1
+		self.toLearn += 1  # další bod k učení se
 		if self.toLearn == self.learningLen: self.toLearn = 0
 	
+	# vrátí, zda-li je možné se ještě něco naučit
 	def canLearnMore(self):
 		return False if self.lastAdapt > self.learningLen else True
 	
-	def printWeights(self):
-		for i in self.inputs:
-			print i.weight,
-		print
+	# vrátí řetězec ohledně hodnot vah vstupů
+	def showWeights(self):
+		return "weights: " + "".join(map(lambda x: \
+			"%4.3f" % x.weight + ' ', self.inputs))
+	
+	# vrátí řetězec výsledku testování daného bodu
+	def showTesting(self, nr):
+		return "".join(map(lambda x: x + ' ', self.testingOrig[nr])) + \
+			str(self.evaluate(self.testing[nr]))
+	
+	# naučí perceptron a vypíše do daného souboru výsledky testování
+	def solveAndSave(self, outputFilename):
+		while self.canLearnMore():
+			self.learnMore()
+		outputFile = open(outputFilename, "w")
+		for i in range(self.testingLen):
+			outputFile.write(self.showTesting(i) + '\n')
+		outputFile.close()
+	
 
-
+# třída grafu učících a testovaných bodů a přímky perceptronu
 class Graph(gtk.DrawingArea):
 	
+	# provede zobrazení aktuálních informací
 	def expose(self, widget, event):
 		width, height = widget.window.get_size()
 		self.cr = cr = widget.window.cairo_create()
 		
+		# celá plocha
 		cr.set_source_rgb(1, 1, 1)
 		cr.rectangle(0, 0, width, height)
 		cr.fill()
 		
+		# plocha pro vykreslování grafu (bez legendy)
 		self.width = width - 45
 		self.height = height - 25
 		
 		self.drawGrid()
 		self.drawLine()
-		for i in range(self.app.maxLearn):
+		for i in range(self.app.maxLearn):  # vykreslení učících bodů
 			self.drawPoint(self.app.net.learning[i])
+		for i in range(self.app.maxTest):  # vykreslení testovaných bodů
+			point = list()
+			point.extend(self.app.net.testing[i])
+			point.append(self.app.net.evaluate(self.app.net.testing[i]))
+			self.drawPoint(point, True)
 	
+	# vykreslí mřížku grafu včetně legendy
 	def drawGrid(self):
 		cr = self.cr; width = self.width; height = self.height
 		net = self.app.net
@@ -139,13 +188,15 @@ class Graph(gtk.DrawingArea):
 
 		cr.stroke()
 	
+	# převede souřadnice bodu na přípustné souřadnice uvnitř grafu
 	def coordsNetToGraph(self, netX, netY):
 		width = self.width; height = self.height
 		x = netX * width
 		y = netY * height
 		return max(min(x, width), 0), max(min(y, height), 0)
 	
-	def drawPoint(self, point):
+	# vykreslí bod, ať již učící či testovaný (podle @testing)
+	def drawPoint(self, point, testing = False):
 		cr = self.cr; width = self.width; height = self.height
 		
 		x, y = self.coordsNetToGraph(point[0], point[1])
@@ -155,7 +206,12 @@ class Graph(gtk.DrawingArea):
 		cr.set_source_rgb(*color)
 		cr.arc(x, y, radius, 0, 2 * pi)
 		cr.fill()
+		if testing:
+			cr.set_source_rgb(0, 0, 0)
+			cr.arc(x, y, radius / 3, 0, 2 * pi)
+			cr.fill()
 	
+	# vykreslí přímku perceptronu
 	def drawLine(self):
 		cr = self.cr; inputs = self.app.net.inputs
 		
@@ -174,17 +230,21 @@ class Graph(gtk.DrawingArea):
 		cr.stroke()
 
 
+# třída GUI aplikace
 class App(gtk.Window):
 	
-	maxLearn = 0
-	maxTest = 0	
+	maxLearn = 0  # maximální vykreslovaný učící bod
+	maxTest = 0	  # maximální vykreslovaný testovaný bod
 	
-	def __init__(self, net):
+	# konstruktor, přijímá zpracovávanou síť a případně jméno vstupního souboru;
+	# vytvoří GUI prvky okna a zobrazí jej
+	def __init__(self, net, filename = ""):
 		super(App, self).__init__()
 		
 		self.net = net
 		
-		self.set_title("Simulace perceptronu neuronové sítě")
+		s = " - " + filename if filename != "" else ""
+		self.set_title("Simulace perceptronu neuronové sítě" + s)
 		self.connect("delete-event", gtk.main_quit)
 		self.set_border_width(5)
 		
@@ -193,9 +253,10 @@ class App(gtk.Window):
 		
 		self.graph = graph = Graph()
 		graph.app = self
-		graph.connect("expose-event", graph.expose)
-		graph.set_size_request(400, 400)
-		vbox.pack_start(graph, True)
+		if self.net.inputsLen == 2:
+			graph.connect("expose-event", graph.expose)
+			graph.set_size_request(500, 500)
+			vbox.pack_start(graph, True)
 		
 		hbox = gtk.HBox(False, 5)
 		hbox.set_size_request(0, 30)
@@ -217,52 +278,93 @@ class App(gtk.Window):
 		restartButton.connect("clicked", self.restart)
 		hbox.add(restartButton)
 		
+		self.textBuffer = gtk.TextBuffer()
+		self.textArea = textArea = gtk.TextView()
+		textArea.set_buffer(self.textBuffer)
+		textArea.set_editable(False)
+		textArea.set_cursor_visible(False)
+		scrollArea = gtk.ScrolledWindow()
+		scrollArea.add(textArea)
+		scrollArea.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		scrollArea.set_size_request(500, 100)
+		vbox.pack_start(scrollArea, True)
+		
 		self.show_all()
-		self.net.printWeights()
+		self.printWeights()
 	
+	# vypíše text do textové oblasti a odřádkuje
+	def printInArea(self, text):
+		self.textBuffer.insert(self.textBuffer.get_end_iter(), text + '\n')
+		self.textArea.scroll_to_iter(self.textBuffer.get_end_iter(), 0, \
+			True, 0, 0)
+	
+	# vypíše do textové oblasti váhy vstupů perceptronu
+	def printWeights(self):
+		self.printInArea(self.net.showWeights())
+	
+	# obslouží zmáčknutí tlačítka pro další učení
 	def nextLearning(self, widget):
 		self.net.learnMore()
-		self.net.printWeights()
+		self.printWeights()
 		if self.maxLearn < self.net.learningLen:
 			self.maxLearn += 1
 		if not self.net.canLearnMore():
 			self.nextLearningButton.set_sensitive(False)
+			self.learnButton.set_sensitive(False)
 		self.queue_draw()
 	
+	# obslouží zmáčknutí tlačítka pro kompletní naučení se
 	def learn(self, widget):
 		while self.net.canLearnMore():
 			self.net.learnMore()
+		self.printWeights()
 		self.maxLearn = self.net.learningLen
+		self.nextLearningButton.set_sensitive(False)
+		self.learnButton.set_sensitive(False)
 		self.queue_draw()
 	
+	# obslouží zmáčknutí tlačítka pro testování dalšího bodu
 	def nextTesting(self, widget):
-		if self.maxTest < self.net.testingLen:
-			self.maxTest += 1
+		self.printInArea(self.net.showTesting(self.maxTest))
+		self.maxTest += 1
 		if self.maxTest >= self.net.testingLen:
 			self.nextTestingButton.set_sensitive(False)
 		self.queue_draw()
 	
+	# obslouží zmáčknutí tlačítka pro reset
 	def restart(self, widget):
 		self.net.reset()
 		self.maxLearn = self.maxTest = 0
 		self.nextLearningButton.set_sensitive(True)
+		self.learnButton.set_sensitive(True)
 		self.nextTestingButton.set_sensitive(True)
+		self.textBuffer.set_text("")
+		self.printWeights()
 		self.queue_draw()
 
 
+# pokud je spuštěn přímo tento program, je proveden
 if __name__ == "__main__":
 	try:
+		# načtení argumentů
 		inputFilename = sys.argv[1]
+		outputFilename = sys.argv[2] if len(sys.argv) > 2 else ""
 	except:
-		print "použití: " + sys.argv[0] + " INPUT_FILE [OUTPUT_FILE]"
+		print "použití: " + sys.argv[0] + " VSTUPNÍ_SOUBOR [VÝSTUPNÍ_SOUBOR]"
 		sys.exit(1)
 	
+	# incializace
 	random.seed()
 
 	inputNet = Net()
 	inputNet.readInputFile(inputFilename)
 	inputNet.reset()
 
-	App(inputNet)
-	gtk.main()
+	# v případě uvedení výstupního souboru se pouze provede výpočet,
+	# který je následně uložen, jinak se spouští interaktivní GUI
+	if outputFilename == "":
+		App(inputNet, inputFilename)
+		gtk.main()
+	else:
+		inputNet.solveAndSave(outputFilename)
 
