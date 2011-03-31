@@ -1,0 +1,42 @@
+# Učebnice pro závodní hru
+
+# počet vrstev
+2
+# počet vstupů
+4
+# popis vstupů
+distance 	0 1
+angle		0 1
+speed		0 1
+distance2	0 1
+
+# počet neuronů v jednotlivých vrstvách
+3 2
+
+# popis výstupů
+acc
+wheel
+
+# koeficient učení
+0.5
+# koeficient vlivu z předchozího kroku
+0.1
+
+# trénovací množina:
+
+# počet prvků
+3
+# jednotlivé prvky
+#0.5	0.5	0.5	0.5	1	0.5
+#0.5	0.5	0	0.5	1	0.5
+#0.5	0.5	1	0.5	1	0.5
+#0.5	0.5	1	0	0.5	0.5
+#0.5	0	0.5	0	0.5	1
+#0.5	1	0.5	0	0.5	0
+0	0	0.5	0	0.5	1
+1	1	0.5	1	0.5	0
+0.5	0.5	0.5	0.5	1	0.5
+
+# testovací množina:
+0
+
