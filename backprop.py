@@ -41,7 +41,7 @@ def main():
 				if hasattr(inp, atr):  # parametry připojení a hry
 					setattr(client, atr, getattr(inp, atr))
 			client.connect()  # připojení k serveru
-			client.play()  # samotná hra
+			client.run()  # samotná hra
 			client.close()  # odpojení
 	except Exception as e:  # někde nastala chyba
 		print "Error: " + str(e)

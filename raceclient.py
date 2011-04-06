@@ -49,6 +49,7 @@ class RaceClient:
 			raise ClientException("Cannot read: " + str(e))
 		data = data.splitlines()
 		if data[0].startswith("finish"):
+			print "Game over"
 			return False
 		if not data[0].startswith("round"):
 			raise ClientException("Bad message: " + data[0])
