@@ -28,6 +28,14 @@ class BackpropNet:
 	
 	# inicializace proměnných třídy po načtení vstupních údajů
 	def init(self):
+		# vymazání od minulého nastavení:
+		self.weight = list()
+		self.y = list()
+		self.kurtosis = list()
+		self.delta = list()
+		self.lastChange = list()
+		
+		# vytvoření struktury:
 		for layer in range(self.layersLen):
 			self.y.append([0.0] * self.layers[layer])
 			self.kurtosis.append([0.5] * self.layers[layer])
@@ -117,6 +125,11 @@ class BackpropNet:
 		global maxError
 		return False if self.error() < maxError else True
 	
+	# naučí se síť
+	def learn(self):
+		while self.canLearnMore():
+			self.learnMore()
+	
 	############################################################################
 	# řešení a výstup:
 	
@@ -126,23 +139,31 @@ class BackpropNet:
 			"".join(map(lambda y: str(y) + ' ', \
 			self.evaluate(self.testingElem[nr])))
 	
-	# naučí síť a vypíše do daného souboru výsledky testování
-	def solveAndSave(self, outputFilename):
-		while self.canLearnMore():
-			self.learnMore()
-		outputFile = open(outputFilename, "w")
+	# vrátí řetězec s výsledky všech testů
+	def showAllTesting(self):
+		out = ""
 		for i in range(self.testingLen):
-			outputFile.write(self.showTesting(i) + '\n')
+			out += self.showTesting(i) + '\n'
+		return out
+	
+	# vypíše do daného souboru výsledky testování
+	def saveTesting(self, outputFilename):
+		outputFile = open(outputFilename, "w")
+		outputFile.write(self.showAllTesting())
 		outputFile.close()
+	
+	# vrátí řetězec s váhami
+	def showWeights(self):
+		return '|'.join( \
+			map(lambda layer: ';'.join( \
+				map(lambda to: ','.join( \
+					map(lambda src: str(src), to)), layer)), \
+			self.weight))
 	
 	# uloží váhy do daného souboru
 	def saveWeights(self, filename):
 		outputFile = open(filename, "w")
-		outputFile.write('|'.join( \
-			map(lambda layer: ';'.join( \
-				map(lambda to: ','.join( \
-					map(lambda src: str(src), to)), layer)), \
-			self.weight)))
+		outputFile.write(self.showWeights())
 		outputFile.close()
 
 	############################################################################
