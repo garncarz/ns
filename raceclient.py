@@ -21,7 +21,7 @@ class RaceClient:
 	color = "a020f0"
 
 	# konstruktor, připojí se k neuronové síti
-	def __init__(self, net):
+	def __init__(self, net = None):
 		self.net = net
 
 	# připojí se k serveru
@@ -68,6 +68,7 @@ class RaceClient:
 	
 	# hraje, dokud může
 	def run(self):
+		print "Playing..."
 		while self.play():
 			pass
 

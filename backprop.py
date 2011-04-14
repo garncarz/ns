@@ -1,20 +1,23 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
+# Vícevrstvá neuronová síť s metodou učení backpropagation
+# Autor: Ondřej Garncarz, 2011
+# Program je napsán v jazyce Python (verze 2.7) a využívá prostředí GTK.
+# Obsluha je plně v rámci GUI.
+
 from backpropnet import *
 from raceclient import *
-import getopt, sys
-import gtk, gtk.glade
-
-# třída argumentů programu
-class Input:
-	pass
+import gtk, gtk.glade, gtk.gdk
 
 
+# třída GUI aplikace
 class App(gtk.Window):
 
+	# inicializace okna a napojené sítě a herního klienta
 	def __init__(self):
 		self.net = BackpropNet()  # vytvoření sítě
+		self.raceClient = RaceClient()  # klient pro hru aut
 	
 		super(App, self).__init__()
 		self.set_title("Neuronová síť")
@@ -23,11 +26,13 @@ class App(gtk.Window):
 		# šablona pro určité dialogové GUI prvky
 		self.glade = gtk.glade.XML("gui.glade")
 		
+		# tabulkové rozložení hlavního okna
 		table = gtk.Table()
 		self.add(table)
 		table.set_row_spacings(5)
 		table.set_col_spacings(5)
 		
+		# informační plocha
 		self.textBuffer = gtk.TextBuffer()
 		self.textArea = textArea = gtk.TextView()
 		textArea.set_buffer(self.textBuffer)
@@ -41,6 +46,9 @@ class App(gtk.Window):
 			"Začněte načtením sítě.")
 		table.attach(scrollArea, 0, 1, 0, 10)
 		
+		# tabulka:
+		
+		# určité hodnoty sítě včetně možnosti změny:
 		row = 0
 		table.attach(gtk.Label("Vrstvy: "), 1, 2, row, row + 1)
 		self.layersLabel = gtk.Label("0")
@@ -67,6 +75,7 @@ class App(gtk.Window):
 		self.impactButton.connect("clicked", self.changeImpact)
 		table.attach(self.impactButton, 3, 4, row, row + 1)
 		
+		# operace se sítí:
 		row += 1
 		self.loadInputButton = gtk.Button("Načíst síť")
 		self.loadInputButton.connect("clicked", self.loadInput)
@@ -87,6 +96,7 @@ class App(gtk.Window):
 		self.saveWeightsButton.connect("clicked", self.saveWeights)
 		table.attach(self.saveWeightsButton, 1, 4, row, row + 1)
 		
+		# operace se vstupy:
 		row += 1
 		self.saveTestingButton = gtk.Button("Uložit vyhodnocenou trénovací " \
 			+ "sadu")
@@ -98,10 +108,13 @@ class App(gtk.Window):
 		self.queryButton.connect("clicked", self.query)
 		table.attach(self.queryButton, 1, 4, row, row + 1)
 		
+		# tlačítko pro hru aut
 		row += 1
-		self.playButton = gtk.Button("Hrát závody")
-		table.attach(self.playButton, 1, 4, row, row + 1)
+		self.gameButton = gtk.Button("Hrát závody")
+		self.gameButton.connect("clicked", self.game)
+		table.attach(self.gameButton, 1, 4, row, row + 1)
 		
+		# zobrazení okna
 		self.show_all()
 
 	# vypíše text do textové oblasti a odřádkuje
@@ -110,6 +123,7 @@ class App(gtk.Window):
 		self.textArea.scroll_to_iter(self.textBuffer.get_end_iter(), 0, \
 			True, 0, 0)
 
+	# změna topologie sítě
 	def changeLayers(self, widget):
 		dialog = self.glade.get_widget("layersDialog")
 		self.glade.get_widget("layersNewValue").set_text(" ".join \
@@ -124,6 +138,7 @@ class App(gtk.Window):
 				self.net.layers[1:])))
 		dialog.hide()
 
+	# změna koeficientu učení
 	def changeLearning(self, weidget):
 		dialog = self.glade.get_widget("learningDialog")
 		self.glade.get_widget("learningNewValue").set_text \
@@ -134,6 +149,7 @@ class App(gtk.Window):
 			self.learningLabel.set_text(str(self.net.learning))
 		dialog.hide()
 	
+	# změnu vlivu z poslední změny
 	def changeImpact(self, widget):
 		dialog = self.glade.get_widget("impactDialog")
 		self.glade.get_widget("impactNewValue").set_text(str(self.net.impact))
@@ -143,6 +159,7 @@ class App(gtk.Window):
 			self.impactLabel.set_text(str(self.net.impact))
 		dialog.hide()
 
+	# načtení sítě
 	def loadInput(self, widget):
 		chooser = gtk.FileChooserDialog( \
 			title = "Otevřít soubor sítě", parent = self, \
@@ -162,6 +179,7 @@ class App(gtk.Window):
 				self.printInArea("Chyba: " + str(e))
 		chooser.destroy()
 	
+	# síť se naučí podle načtených dat
 	def learn(self, widget):
 		try:
 			self.printInArea("Začínám se učit... (postup možno sledovat na " + \
@@ -172,6 +190,7 @@ class App(gtk.Window):
 		except Exception as e:
 			self.printInArea("Je načtena síť? Chyba: " + str(e))
 	
+	# načtení vah ze souboru
 	def loadWeights(self, widget):
 		chooser = gtk.FileChooserDialog( \
 			title = "Otevřít soubor s váhami", parent = self, \
@@ -186,6 +205,7 @@ class App(gtk.Window):
 				self.printInArea("Chyba: " + str(e))
 		chooser.destroy()
 	
+	# uložení vah do souboru
 	def saveWeights(self, widget):
 		chooser = gtk.FileChooserDialog( \
 			title = "Uložit váhy do souboru", parent = self, \
@@ -200,6 +220,7 @@ class App(gtk.Window):
 				self.printInArea("Chyba: " + str(e))
 		chooser.destroy()
 	
+	# otestování testovací sady a uložení výsledků
 	def saveTesting(self, widget):
 		chooser = gtk.FileChooserDialog( \
 			title = "Uložit výsledky do souboru", parent = self, \
@@ -215,6 +236,7 @@ class App(gtk.Window):
 				self.printInArea("Chyba: " + str(e))
 		chooser.destroy()
 	
+	# vlastní dotaz na síť
 	def query(self, widget):
 		dialog = self.glade.get_widget("queryDialog")
 		if dialog.run() == 1:
@@ -228,48 +250,44 @@ class App(gtk.Window):
 				self.printInArea("Je naučena síť? Je správný počet vstupů? " + \
 					"Chyba: " + str(e))
 		dialog.hide()
-
-# hlavní funkce běhu programu
-def main():
-	# načtení vstupu:
-	try:
-		opts, args = getopt.getopt(sys.argv[1:], "", [ \
-			"loadW", "genOut", "play", \
-			"input=", "output=", "weights=", \
-			"server=", "port=", "race=", "driver=", "color="])
-	except getopt.GetoptError:
-		sys.exit(1)
-	inp = Input()
-	for o, v in opts:
-		setattr(inp, o[2:], v)
 	
-	# akce podle parametrů:
-	try:
-		net = BackpropNet()  # vytvoření sítě
-		net.readInputFile(inp.input)
-		
-		if hasattr(inp, "loadW"):  # načtení vah
-			net.loadWeights(inp.weights)
-		
-		if hasattr(inp, "genOut"):  # naučení se podle vstupu a uložení
-			net.solveAndSave(inp.output)
-			net.saveWeights(inp.weights)  # uložení i vah
-		
-		if hasattr(inp, "play"):  # závodní hra
-			client = RaceClient(net)
-			for atr in ["server", "port", "race", "driver", "color"]:
-				if hasattr(inp, atr):  # parametry připojení a hry
-					setattr(client, atr, getattr(inp, atr))
-			client.connect()  # připojení k serveru
-			client.run()  # samotná hra
-			client.close()  # odpojení
-	except Exception as e:  # někde nastala chyba
-		print "Error: " + str(e)
+	# hra aut
+	def game(self, widget):
+		dialog = self.glade.get_widget("gameDialog")
+		self.glade.get_widget("gameServer").set_text(str( \
+			self.raceClient.server))
+		self.glade.get_widget("gamePort").set_text(str(self.raceClient.port))
+		self.glade.get_widget("gameRace").set_text(str(self.raceClient.race))
+		self.glade.get_widget("gameDriver").set_text(str( \
+			self.raceClient.driver))
+		self.glade.get_widget("gameColor").set_current_color(gtk.gdk.color_parse( \
+			"#" + self.raceClient.color))
+		if dialog.run() == 1:
+			dialog.hide()
+			self.raceClient.server = self.glade.get_widget("gameServer") \
+				.get_text()
+			self.raceClient.port = self.glade.get_widget("gamePort").get_text()
+			self.raceClient.race = self.glade.get_widget("gameRace").get_text()
+			self.raceClient.driver = self.glade.get_widget("gameDriver") \
+				.get_text()
+			c = self.glade.get_widget("gameColor") \
+				.get_current_color().to_string()[1:]
+			self.raceClient.color = c[0:2] + c[4:6] + c[8:10]
+			self.raceClient.net = self.net
+			try:
+				self.printInArea("Připojuji se...")
+				self.raceClient.connect()
+				self.printInArea("Začínám hrát...")
+				self.raceClient.run()
+				self.printInArea("Hra skončila.")
+				self.raceClient.close()
+			except Exception as e:
+				self.printInArea("Chyba: " + str(e))
+		dialog.hide()
 
 
 # pokud je spuštěn přímo tento program, je proveden
 if __name__ == "__main__":
-	# main()
 	App()
 	gtk.main()
 
