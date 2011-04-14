@@ -1,0 +1,54 @@
+# Učebnice pro německou vlajku
+
+# počet vrstev
+2
+# počet vstupů
+2
+# popis vstupů
+x 	0 1
+y	0 1
+
+# počet neuronů v jednotlivých vrstvách
+3 3
+
+# popis výstupů
+r
+g
+b
+
+# koeficient učení
+0.4
+# koeficient vlivu z předchozího kroku
+0.1
+
+# trénovací množina:
+18
+
+# černá část:
+0		0		0	0	0
+0.5		0		0	0	0
+1		0		0	0	0
+1		0.32	0	0	0
+0.5		0.32	0	0	0
+0		0.32	0	0	0
+
+# červená část:
+0		0.34	1	0	0
+0.5		0.34	1	0	0
+1		0.34	1	0	0
+1		0.65	1	0	0
+0.5		0.65	1	0	0
+0		0.65	1	0	0
+
+# zlatá část:
+0		0.67	1	0.8	0
+0.5		0.67	1	0.8	0
+1		0.67	1	0.8	0
+1		1		1	0.8	0
+0.5		1		1	0.8	0
+0		1		1	0.8	0
+
+
+# testovací množina:
+0
+

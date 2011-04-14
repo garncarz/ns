@@ -1,0 +1,53 @@
+# Učebnice pro českou vlajku
+
+# počet vrstev
+2
+# počet vstupů
+2
+# popis vstupů
+x 	0 1
+y	0 1
+
+# počet neuronů v jednotlivých vrstvách
+3 3
+
+# popis výstupů
+r
+g
+b
+
+# koeficient učení
+0.4
+# koeficient vlivu z předchozího kroku
+0.1
+
+# trénovací množina:
+17
+
+# modrá část:
+0		0.01	0	0	1
+0.49	0.5		0	0	1
+0.01	1		0	0	1
+0.49	0.5		0	0	1
+0.25	0.5		0	0	1
+
+# bílá část:
+0.1		0		1	1	1
+0.5		0.49	1	1	1
+1		0.49	1	1	1
+1		0		1	1	1
+0.66	0.25	1	1	1
+0.66	0.49	1	1	1
+
+# červená část:
+0.1		1		1	0	0
+0.5		0.51	1	0	0
+1		0.51	1	0	0
+1		1		1	0	0
+0.66	0.75	1	0	0
+0.66	0.51	1	0	0
+
+
+# testovací množina:
+0
+
