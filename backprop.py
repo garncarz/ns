@@ -4,7 +4,7 @@
 from backpropnet import *
 from raceclient import *
 import getopt, sys
-import gtk
+import gtk, gtk.glade
 
 # třída argumentů programu
 class Input:
@@ -19,6 +19,9 @@ class App(gtk.Window):
 		super(App, self).__init__()
 		self.set_title("Neuronová síť")
 		self.connect("delete-event", gtk.main_quit)
+		
+		# šablona pro určité dialogové GUI prvky
+		self.glade = gtk.glade.XML("gui.glade")
 		
 		table = gtk.Table()
 		self.add(table)
@@ -43,11 +46,13 @@ class App(gtk.Window):
 		self.layersLabel = gtk.Label("0")
 		table.attach(self.layersLabel, 2, 3, row, row + 1)
 		self.layersButton = gtk.Button("Změnit")
+		self.layersButton.set_sensitive(False)
+		self.layersButton.connect("clicked", self.changeLayers)
 		table.attach(self.layersButton, 3, 4, row, row + 1)
 		
 		row += 1
 		table.attach(gtk.Label("Koeficient učení: "), 1, 2, row, row + 1)
-		self.learningLabel = gtk.Label("0")
+		self.learningLabel = gtk.Label(self.net.learning)
 		table.attach(self.learningLabel, 2, 3, row, row + 1)
 		self.learningButton = gtk.Button("Změnit")
 		self.learningButton.connect("clicked", self.changeLearning)
@@ -56,9 +61,10 @@ class App(gtk.Window):
 		row += 1
 		table.attach(gtk.Label("Koeficient vlivu z předchozího kroku: "), 1, \
 			2, row, row + 1)
-		self.impactLabel = gtk.Label("0")
+		self.impactLabel = gtk.Label(self.net.impact)
 		table.attach(self.impactLabel, 2, 3, row, row + 1)
 		self.impactButton = gtk.Button("Změnit")
+		self.impactButton.connect("clicked", self.changeImpact)
 		table.attach(self.impactButton, 3, 4, row, row + 1)
 		
 		row += 1
@@ -88,8 +94,9 @@ class App(gtk.Window):
 		table.attach(self.saveTestingButton, 1, 4, row, row + 1)
 		
 		row += 1
-		self.testButton = gtk.Button("Dotaz")
-		table.attach(self.testButton, 1, 4, row, row + 1)
+		self.queryButton = gtk.Button("Dotaz")
+		self.queryButton.connect("clicked", self.query)
+		table.attach(self.queryButton, 1, 4, row, row + 1)
 		
 		row += 1
 		self.playButton = gtk.Button("Hrát závody")
@@ -103,16 +110,38 @@ class App(gtk.Window):
 		self.textArea.scroll_to_iter(self.textBuffer.get_end_iter(), 0, \
 			True, 0, 0)
 
+	def changeLayers(self, widget):
+		dialog = self.glade.get_widget("layersDialog")
+		self.glade.get_widget("layersNewValue").set_text(" ".join \
+			(map(lambda l: str(l), self.net.layers[1:])))
+		if dialog.run() == 1:
+			try:
+				self.net.setLayers(self.glade.get_widget("layersNewValue") \
+					.get_text())
+			except Exception as e:
+				self.printInArea("Chyba: " + str(e))
+			self.layersLabel.set_text(" ".join(map(lambda l: str(l), \
+				self.net.layers[1:])))
+		dialog.hide()
+
 	def changeLearning(self, weidget):
-		dialog = gtk.MessageDialog( \
-			parent = self, type = gtk.MESSAGE_QUESTION, \
-			flags = gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, \
-			buttons = gtk.BUTTONS_OK, \
-			message_format = "Nový koeficient učení:")
-		entry = gtk.Entry()
-		dialog.vbox.pack_end(entry, True, True, 0)
-		dialog.show_all()
-		dialog.run()
+		dialog = self.glade.get_widget("learningDialog")
+		self.glade.get_widget("learningNewValue").set_text \
+			(str(self.net.learning))
+		if dialog.run() == 1:
+			self.net.learning = float(self.glade.get_widget \
+				("learningNewValue").get_text())
+			self.learningLabel.set_text(str(self.net.learning))
+		dialog.hide()
+	
+	def changeImpact(self, widget):
+		dialog = self.glade.get_widget("impactDialog")
+		self.glade.get_widget("impactNewValue").set_text(str(self.net.impact))
+		if dialog.run() == 1:
+			self.net.impact = float(self.glade.get_widget("impactNewValue") \
+				.get_text())
+			self.impactLabel.set_text(str(self.net.impact))
+		dialog.hide()
 
 	def loadInput(self, widget):
 		chooser = gtk.FileChooserDialog( \
@@ -125,6 +154,7 @@ class App(gtk.Window):
 				self.net.readInputFile(chooser.get_filename())
 				self.layersLabel.set_text(" ".join(map(lambda l: str(l), \
 					self.net.layers[1:])))
+				self.layersButton.set_sensitive(True)
 				self.learningLabel.set_text(str(self.net.learning))
 				self.impactLabel.set_text(str(self.net.impact))
 				self.printInArea("Načtena síť z " + chooser.get_filename())
@@ -184,6 +214,20 @@ class App(gtk.Window):
 			except Exception as e:
 				self.printInArea("Chyba: " + str(e))
 		chooser.destroy()
+	
+	def query(self, widget):
+		dialog = self.glade.get_widget("queryDialog")
+		if dialog.run() == 1:
+			try:
+				self.printInArea("Výsledek dotazu: " + \
+					" ".join(map(lambda o: str(o), \
+						self.net.evaluate(map(lambda i: int(i), \
+							self.glade.get_widget("queryValue") \
+								.get_text().split())))))
+			except Exception as e:
+				self.printInArea("Je naučena síť? Je správný počet vstupů? " + \
+					"Chyba: " + str(e))
+		dialog.hide()
 
 # hlavní funkce běhu programu
 def main():

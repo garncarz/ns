@@ -259,4 +259,10 @@ class BackpropNet:
 				layer.split(';')), \
 			content.split('|'))
 		inputFile.close()
+	
+	# nastaví vrstvy
+	def setLayers(self, layersString):
+		self.layers = [self.inputsLen + 1] + \
+			map(lambda l: int(l), layersString.split())
+		self.layersLen = len(self.layers)
 
