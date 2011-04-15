@@ -94,7 +94,7 @@ class BackpropNet:
 					gradient = self.delta[layer][to] * self.y[layer][to] * \
 						(1.0 - self.y[layer][to]) * self.kurtosis[layer][to] * \
 						self.y[layer - 1][src]
-					self.weight[layer][to][src] += -self.learning * gradient + \
+					self.weight[layer][to][src] -= self.learning * gradient + \
 						self.impact * self.lastChange[layer][to]
 					self.lastChange[layer][to] = gradient
 
@@ -123,7 +123,11 @@ class BackpropNet:
 	# vrátí, zda-li je možné se ještě něco naučit
 	def canLearnMore(self):
 		global maxError
-		return False if self.error() < maxError else True
+		# budeme kontrolovat nepotřebnost učení jen po určitém počtu kroků
+		# - pro urychlení
+		if self.history % 1000 == 0:
+			return False if self.error() < maxError else True
+		return True
 	
 	# naučí se síť
 	def learn(self):
@@ -265,4 +269,6 @@ class BackpropNet:
 		self.layers = [self.inputsLen + 1] + \
 			map(lambda l: int(l), layersString.split())
 		self.layersLen = len(self.layers)
+		self.init()  # nutná reinicializace
+
 
