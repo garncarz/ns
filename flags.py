@@ -12,7 +12,7 @@ class Flag:
 	def createLearningFile(self, country):
 		img = Image.open("orig." + country + ".png")
 		netFile = open("flag." + country, "w")
-		netFile.write("4\n2\nx 0 1\ny 0 1\n6 5 4 3\nr\ng\nb\n0.4\n0.1\n")
+		netFile.write("3\n2\nx 0 1\ny 0 1\n16 23 3\nr\ng\nb\n0.4\n0.1\n")
 		(width, height) = img.size
 		netFile.write(str(width * height) + '\n')
 		for x in range(width):
