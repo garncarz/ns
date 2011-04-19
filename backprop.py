@@ -243,7 +243,7 @@ class App(gtk.Window):
 			try:
 				self.printInArea("Výsledek dotazu: " + \
 					" ".join(map(lambda o: str(o), \
-						self.net.evaluate(map(lambda i: int(i), \
+						self.net.evaluate(map(lambda i: float(i), \
 							self.glade.get_widget("queryValue") \
 								.get_text().split())))))
 			except Exception as e:
