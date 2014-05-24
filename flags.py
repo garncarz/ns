@@ -10,7 +10,7 @@ class Flag:
 
 	# vytvoří soubor s definicí sítě a výukovými daty pro daný stát
 	def createLearningFile(self, country):
-		img = Image.open("orig." + country + ".png")
+		img = Image.open("orig." + country + ".png").convert("RGB")
 		netFile = open("flag." + country, "w")
 		netFile.write("3\n2\nx 0 1\ny 0 1\n16 23 3\nr\ng\nb\n0.4\n0.1\n")
 		(width, height) = img.size
@@ -19,7 +19,7 @@ class Flag:
 			for y in range(height):
 				netFile.write(str(float(x) / width) + ' ' + \
 					str(float(y) / height) + ' ' + ' '.join(map( \
-					lambda col: str(col / 255.0), img.getpixel((x, y))[:-1])) \
+					lambda col: str(col / 255.0), img.getpixel((x, y)))) \
 					+ '\n')
 		netFile.write("0\n")
 		netFile.close()

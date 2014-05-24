@@ -4,7 +4,7 @@
 import math
 import random
 
-# maximální přístupná chyba
+# maximální přípustná chyba
 maxError = 0.2
 
 # třída neuronové sítě
