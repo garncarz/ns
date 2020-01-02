@@ -4,10 +4,10 @@ Solutions for a university course, 2011.
 
 [Videos](https://www.youtube.com/playlist?list=PL8ic54pQ5gLwk5DIb9FtTvIiqHTf0MfzN):
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/9eLR5J2XAoc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![](http://img.youtube.com/vi/9eLR5J2XAoc/0.jpg)](http://www.youtube.com/watch?v=9eLR5J2XAoc "Perceptron learning a line dividing points")
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/aT6OPqYN1Wo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![](http://img.youtube.com/vi/aT6OPqYN1Wo/0.jpg)](http://www.youtube.com/watch?v=aT6OPqYN1Wo "Neural net learning the Czech flag")
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/5qYN5PWmT9g" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![](http://img.youtube.com/vi/5qYN5PWmT9g/0.jpg)](http://www.youtube.com/watch?v=5qYN5PWmT9g "Race game")
 
 <!-- ❄️ Hello to the GitHub Archive! ❄️ -->
